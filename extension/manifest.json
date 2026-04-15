@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "RegionShot - 단축키 캡쳐",
+  "version": "7.1.2",
+  "description": "단축키를 직접 지정해서 크롬 화면을 편하게 캡쳐하세요!",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "downloads",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "RegionShot",
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

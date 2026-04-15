@@ -1,0 +1,17 @@
+{
+  "name": "qa-chrome-ext-regionshot",
+  "version": "1.0.0",
+  "description": "QA Automation — RegionShot Chrome Extension (Playwright)",
+  "scripts": {
+    "test": "playwright test",
+    "test:popup": "playwright test tests/popup.spec.ts",
+    "test:shortcut": "playwright test tests/shortcut.spec.ts",
+    "test:capture": "playwright test tests/capture.spec.ts",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}

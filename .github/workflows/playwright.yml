@@ -1,0 +1,104 @@
+name: RegionShot Extension Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 0 * * *'   # 매일 09:00 KST
+
+jobs:
+  extension-test:
+    name: Chrome Extension QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright + Chrome
+        run: npx playwright install chrome --with-deps
+
+      # 크롬 확장은 headful 필수 → xvfb 가상 디스플레이
+      - name: Install Xvfb
+        run: sudo apt-get install -y xvfb
+
+      - name: Run tests (with virtual display)
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" npx playwright test
+        continue-on-error: true
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test artifacts on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-${{ github.run_number }}
+          path: test-results/
+          retention-days: 7
+
+  deploy-report:
+    name: Deploy Report to GitHub Pages
+    needs: extension-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright + Chrome
+        run: npx playwright install chrome --with-deps
+
+      - name: Install Xvfb
+        run: sudo apt-get install -y xvfb
+
+      - name: Run tests for report
+        run: xvfb-run --auto-servernum npx playwright test
+        continue-on-error: true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: playwright-report/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
