@@ -5,14 +5,9 @@ const OVERLAY_SELECTOR = 'html > div[style*="position: fixed"]';
 
 test.describe('캡쳐 동작', () => {
 
-  test('TC-C01 : content script 가 일반 페이지에 정상 주입된다', async ({ extContext, extensionId }) => {
-    const page = await extContext.newPage();
-    await page.goto(TARGET_PAGE);
-    await page.waitForLoadState('networkidle');
+  test('TC-C01 : extensionId 가 32자 소문자 형식이다', async ({ extensionId }) => {
     expect(extensionId).toMatch(/^[a-z]{32}$/);
-    const state = await page.evaluate(() => document.readyState);
-    expect(state).toBe('complete');
-    await page.close();
+    expect(extensionId.length).toBe(32);
   });
 
   test('TC-C02 : #captureBtn 클릭 시 JS 에러가 발생하지 않는다', async ({ extContext, popupUrl }) => {
@@ -168,9 +163,13 @@ test.describe('캡쳐 동작', () => {
     await targetPage.close();
   });
 
-  test('TC-C09 : extensionId 가 32자 소문자 형식이다', async ({ extensionId }) => {
-    expect(extensionId).toMatch(/^[a-z]{32}$/);
-    expect(extensionId.length).toBe(32);
+  test('TC-C09 : content script 가 일반 페이지에 정상 주입된다', async ({ extContext }) => {
+    const page = await extContext.newPage();
+    await page.goto(TARGET_PAGE);
+    await page.waitForLoadState('networkidle');
+    const state = await page.evaluate(() => document.readyState);
+    expect(state).toBe('complete');
+    await page.close();
   });
 
 });

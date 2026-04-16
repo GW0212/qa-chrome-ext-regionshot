@@ -3,6 +3,7 @@
   "name": "RegionShot - 단축키 캡쳐",
   "version": "7.1.2",
   "description": "단축키를 직접 지정해서 크롬 화면을 편하게 캡쳐하세요!",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsJmVvEImfUfXwYqrFb7qo9E9nt8IE+S9HNz/Xqez/q72pAXQWV0zuzV68FWv5htx2xcbHRrZV4aSakfjc4XG+TqIkYj1lOV0614XOx+b8KyMTe8fqmNUvEP+mvzvCxRquiuS1O1cmDpP7h4wtMNoxIRHozZhejleY4kyv3tm/usd/2XbwbHXhPoxnc3UFeG5Mark6jW1Wwg7zVqeLinrhMCCJ1JWLFc9OTlk/7LB1gBTWv4mo1NRfi+UaogUCrSXdGP7qRl5wXszpizQngfr9mwp5j2F1FVJ1OlJh19HfMKLMJTL54R7ZAIz/8Y0bTPBtg0AuVqSYjFIkmeO9ieSGQIDAQAB",
   "permissions": [
     "activeTab",
     "tabs",
