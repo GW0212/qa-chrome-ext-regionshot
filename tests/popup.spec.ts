@@ -1,8 +1,3 @@
-/**
- * popup.spec.ts — 팝업 UI 검증
- * TC-P01 ~ TC-P10
- */
-
 import { test, expect } from './fixtures/extensionFixture';
 
 test.describe('팝업 UI', () => {
@@ -11,10 +6,8 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     const errors: string[] = [];
     page.on('pageerror', err => errors.push(err.message));
-
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     expect(errors).toHaveLength(0);
     await page.close();
   });
@@ -23,7 +16,6 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await expect(page.locator('.title')).toHaveText('RegionShot');
     await page.close();
   });
@@ -32,7 +24,6 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await expect(page.locator('.subtitle')).toContainText('빠른 영역 캡쳐');
     await page.close();
   });
@@ -41,7 +32,6 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await expect(page.locator('#captureBtn')).toBeVisible();
     await expect(page.locator('#captureBtn')).toContainText('캡쳐');
     await page.close();
@@ -51,7 +41,6 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await expect(page.locator('#setShortcutBtn')).toBeVisible();
     await expect(page.locator('#setShortcutBtn')).toContainText('단축키 지정');
     await page.close();
@@ -61,7 +50,6 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     const disp = page.locator('#shortcutDisplay');
     await expect(disp).toBeVisible();
     const text = await disp.textContent();
@@ -73,7 +61,6 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     const options = await page.locator('#langSelect option').count();
     expect(options).toBe(7);
     await page.close();
@@ -83,10 +70,8 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await page.locator('#langSelect').selectOption('en');
     await page.waitForTimeout(300);
-
     await expect(page.locator('#captureBtn')).toContainText('Start region capture');
     await expect(page.locator('.subtitle')).toContainText('Quick region capture');
     await page.close();
@@ -96,10 +81,8 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await page.locator('#langSelect').selectOption('ja');
     await page.waitForTimeout(300);
-
     await expect(page.locator('.subtitle')).toContainText('クイック範囲キャプチャ');
     await page.close();
   });
@@ -108,7 +91,6 @@ test.describe('팝업 UI', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     const width = await page.evaluate(() => document.body.scrollWidth);
     expect(width).toBeGreaterThanOrEqual(300);
     await page.close();

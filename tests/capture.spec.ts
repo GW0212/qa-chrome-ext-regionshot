@@ -1,8 +1,3 @@
-/**
- * capture.spec.ts — 캡쳐 동작 검증
- * TC-C01 ~ TC-C09
- */
-
 import { test, expect } from './fixtures/extensionFixture';
 
 const TARGET_PAGE = 'https://example.com';
@@ -14,10 +9,7 @@ test.describe('캡쳐 동작', () => {
     const page = await extContext.newPage();
     await page.goto(TARGET_PAGE);
     await page.waitForLoadState('networkidle');
-
-    // extensionId 형식 검증
     expect(extensionId).toMatch(/^[a-z]{32}$/);
-
     const state = await page.evaluate(() => document.readyState);
     expect(state).toBe('complete');
     await page.close();
@@ -27,12 +19,10 @@ test.describe('캡쳐 동작', () => {
     const popup = await extContext.newPage();
     const errors: string[] = [];
     popup.on('pageerror', err => errors.push(err.message));
-
     await popup.goto(popupUrl);
     await popup.waitForLoadState('domcontentloaded');
     await popup.locator('#captureBtn').click();
     await popup.waitForTimeout(500);
-
     expect(errors).toHaveLength(0);
     await popup.close();
   });
@@ -41,15 +31,12 @@ test.describe('캡쳐 동작', () => {
     const targetPage = await extContext.newPage();
     await targetPage.goto(TARGET_PAGE);
     await targetPage.waitForLoadState('networkidle');
-
     const popup = await extContext.newPage();
     await popup.goto(popupUrl);
     await popup.waitForLoadState('domcontentloaded');
     await popup.locator('#captureBtn').click();
-
     await targetPage.bringToFront();
     await targetPage.waitForTimeout(1500);
-
     const overlay = targetPage.locator(OVERLAY_SELECTOR).first();
     const visible = await overlay.isVisible().catch(() => false);
     if (visible) {
@@ -64,15 +51,12 @@ test.describe('캡쳐 동작', () => {
     const targetPage = await extContext.newPage();
     await targetPage.goto(TARGET_PAGE);
     await targetPage.waitForLoadState('networkidle');
-
     const popup = await extContext.newPage();
     await popup.goto(popupUrl);
     await popup.waitForLoadState('domcontentloaded');
     await popup.locator('#captureBtn').click();
-
     await targetPage.bringToFront();
     await targetPage.waitForTimeout(1500);
-
     const overlay = targetPage.locator(OVERLAY_SELECTOR).first();
     const visible = await overlay.isVisible().catch(() => false);
     if (visible) {
@@ -89,24 +73,19 @@ test.describe('캡쳐 동작', () => {
     const targetPage = await extContext.newPage();
     await targetPage.goto(TARGET_PAGE);
     await targetPage.waitForLoadState('networkidle');
-
     const errors: string[] = [];
     targetPage.on('pageerror', err => errors.push(err.message));
-
     const popup = await extContext.newPage();
     await popup.goto(popupUrl);
     await popup.waitForLoadState('domcontentloaded');
     await popup.locator('#captureBtn').click();
-
     await targetPage.bringToFront();
     await targetPage.waitForTimeout(1500);
-
     await targetPage.mouse.move(100, 100);
     await targetPage.mouse.down();
     await targetPage.mouse.move(400, 300);
     await targetPage.mouse.up();
     await targetPage.waitForTimeout(500);
-
     expect(errors).toHaveLength(0);
     await targetPage.close();
   });
@@ -115,28 +94,19 @@ test.describe('캡쳐 동작', () => {
     const targetPage = await extContext.newPage();
     await targetPage.goto(TARGET_PAGE);
     await targetPage.waitForLoadState('networkidle');
-
     const popup = await extContext.newPage();
     await popup.goto(popupUrl);
     await popup.waitForLoadState('domcontentloaded');
     await popup.locator('#captureBtn').click();
-
     await targetPage.bringToFront();
     await targetPage.waitForTimeout(1500);
-
     const overlayVisible = await targetPage.locator(OVERLAY_SELECTOR).first().isVisible().catch(() => false);
-    if (!overlayVisible) {
-      console.log('⚠️ TC-C06: 오버레이 미감지, 생략');
-      await targetPage.close();
-      return;
-    }
-
+    if (!overlayVisible) { console.log('⚠️ TC-C06: 오버레이 미감지, 생략'); await targetPage.close(); return; }
     await targetPage.mouse.move(100, 100);
     await targetPage.mouse.down();
     await targetPage.mouse.move(400, 300);
     await targetPage.mouse.up();
     await targetPage.waitForTimeout(1000);
-
     const imgVisible = await targetPage.locator('img[src^="data:image/png"]').first().isVisible().catch(() => false);
     if (imgVisible) {
       await expect(targetPage.locator('img[src^="data:image/png"]').first()).toBeVisible();
@@ -150,28 +120,19 @@ test.describe('캡쳐 동작', () => {
     const targetPage = await extContext.newPage();
     await targetPage.goto(TARGET_PAGE);
     await targetPage.waitForLoadState('networkidle');
-
     const popup = await extContext.newPage();
     await popup.goto(popupUrl);
     await popup.waitForLoadState('domcontentloaded');
     await popup.locator('#captureBtn').click();
-
     await targetPage.bringToFront();
     await targetPage.waitForTimeout(1500);
-
     const overlayVisible = await targetPage.locator(OVERLAY_SELECTOR).first().isVisible().catch(() => false);
-    if (!overlayVisible) {
-      console.log('⚠️ TC-C07: 오버레이 미감지, 생략');
-      await targetPage.close();
-      return;
-    }
-
+    if (!overlayVisible) { console.log('⚠️ TC-C07: 오버레이 미감지, 생략'); await targetPage.close(); return; }
     await targetPage.mouse.move(100, 100);
     await targetPage.mouse.down();
     await targetPage.mouse.move(400, 300);
     await targetPage.mouse.up();
     await targetPage.waitForTimeout(1000);
-
     const copyVisible = await targetPage.locator('button, span, div').filter({ hasText: /복사|copy/i }).first().isVisible().catch(() => false);
     if (copyVisible) {
       await expect(targetPage.locator('button, span, div').filter({ hasText: /복사|copy/i }).first()).toBeVisible();
@@ -185,28 +146,19 @@ test.describe('캡쳐 동작', () => {
     const targetPage = await extContext.newPage();
     await targetPage.goto(TARGET_PAGE);
     await targetPage.waitForLoadState('networkidle');
-
     const popup = await extContext.newPage();
     await popup.goto(popupUrl);
     await popup.waitForLoadState('domcontentloaded');
     await popup.locator('#captureBtn').click();
-
     await targetPage.bringToFront();
     await targetPage.waitForTimeout(1500);
-
     const overlayVisible = await targetPage.locator(OVERLAY_SELECTOR).first().isVisible().catch(() => false);
-    if (!overlayVisible) {
-      console.log('⚠️ TC-C08: 오버레이 미감지, 생략');
-      await targetPage.close();
-      return;
-    }
-
+    if (!overlayVisible) { console.log('⚠️ TC-C08: 오버레이 미감지, 생략'); await targetPage.close(); return; }
     await targetPage.mouse.move(100, 100);
     await targetPage.mouse.down();
     await targetPage.mouse.move(400, 300);
     await targetPage.mouse.up();
     await targetPage.waitForTimeout(1000);
-
     const closeVisible = await targetPage.locator('button, span, div').filter({ hasText: /닫기|close/i }).first().isVisible().catch(() => false);
     if (closeVisible) {
       await expect(targetPage.locator('button, span, div').filter({ hasText: /닫기|close/i }).first()).toBeVisible();

@@ -21,6 +21,6 @@ export default defineConfig({
       use: { headless: false },
     },
   ],
-  timeout: 20_000,
+  timeout: 30_000,
   expect: { timeout: 8_000 },
 });

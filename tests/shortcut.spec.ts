@@ -1,8 +1,3 @@
-/**
- * shortcut.spec.ts — 단축키 설정 검증
- * TC-S01 ~ TC-S07
- */
-
 import { test, expect } from './fixtures/extensionFixture';
 
 test.describe('단축키 설정', () => {
@@ -11,7 +6,6 @@ test.describe('단축키 설정', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await expect(page.locator('#recordHint')).toBeHidden();
     await page.locator('#setShortcutBtn').click();
     await page.waitForTimeout(100);
@@ -23,7 +17,6 @@ test.describe('단축키 설정', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await expect(page.locator('#recordHint')).toBeHidden();
     await page.close();
   });
@@ -32,12 +25,10 @@ test.describe('단축키 설정', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await page.locator('#setShortcutBtn').click();
     await page.waitForTimeout(100);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
-
     await expect(page.locator('#recordHint')).toBeHidden();
     await page.close();
   });
@@ -46,14 +37,11 @@ test.describe('단축키 설정', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     const before = await page.locator('#shortcutDisplay').textContent();
-
     await page.locator('#setShortcutBtn').click();
     await page.waitForTimeout(100);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
-
     const after = await page.locator('#shortcutDisplay').textContent();
     expect(after).toBe(before);
     await page.close();
@@ -63,20 +51,15 @@ test.describe('단축키 설정', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     await page.locator('#setShortcutBtn').click();
     await page.waitForTimeout(100);
-
     await page.keyboard.down('Control');
     await page.keyboard.down('Shift');
     await page.keyboard.down('A');
     await page.keyboard.up('A');
     await page.keyboard.up('Shift');
     await page.keyboard.up('Control');
-
-    // popup.js: 400ms 후 자동 저장
     await page.waitForTimeout(700);
-
     const disp = await page.locator('#shortcutDisplay').textContent();
     expect(disp).toContain('Ctrl');
     await page.close();
@@ -86,7 +69,6 @@ test.describe('단축키 설정', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     const available = await page.evaluate(
       () => typeof chrome !== 'undefined' && typeof chrome.storage !== 'undefined'
     );
@@ -98,7 +80,6 @@ test.describe('단축키 설정', () => {
     const page = await extContext.newPage();
     await page.goto(popupUrl);
     await page.waitForLoadState('domcontentloaded');
-
     const available = await page.evaluate(
       () => typeof chrome !== 'undefined' && typeof chrome.tabs !== 'undefined'
     );

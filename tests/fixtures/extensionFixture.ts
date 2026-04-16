@@ -1,11 +1,14 @@
 /**
  * extensionFixture.ts
  *
- * 핵심 개선사항:
- * 1. 빈 문자열('') 대신 실제 임시 디렉토리 사용 → CI 안정성 향상
- * 2. --disable-gpu 추가 → xvfb 환경 필수 플래그
- * 3. waitForEvent → polling 3단계 fallback
- * 4. scope: 'worker' → 브라우저 1번만 열고 닫기
+ * [핵심 변경]
+ * CI(xvfb) 환경에서 Service Worker가 등록되지 않는 문제를 해결하기 위해
+ * chrome://extensions 페이지의 Shadow DOM을 파싱해서 extensionId를 추출합니다.
+ *
+ * 추출 우선순위:
+ * 1. context.serviceWorkers() — 이미 등록된 경우 즉시 사용
+ * 2. context.waitForEvent('serviceworker') — 등록 이벤트 대기 (5초)
+ * 3. chrome://extensions 페이지 Shadow DOM 파싱 — CI 최종 fallback
  */
 
 import { test as base, chromium, BrowserContext } from '@playwright/test';
@@ -15,7 +18,6 @@ import fs from 'fs';
 
 const EXTENSION_PATH = path.resolve(__dirname, '../extension');
 
-// Worker scope fixture 타입 (두 번째 제네릭)
 type WorkerFixtures = {
   extContext: BrowserContext;
   extensionId: string;
@@ -24,9 +26,7 @@ type WorkerFixtures = {
 
 export const test = base.extend<{}, WorkerFixtures>({
 
-  // ── extContext : 브라우저를 worker당 1번만 열고 닫는다 ──
   extContext: [async ({}, use) => {
-    // 실제 임시 디렉토리 생성 (빈 문자열은 일부 CI에서 불안정)
     const userDataDir = fs.mkdtempSync(
       path.join(os.tmpdir(), 'pw-regionshot-')
     );
@@ -39,53 +39,104 @@ export const test = base.extend<{}, WorkerFixtures>({
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu',                    // CI xvfb 필수
+        '--disable-gpu',
         '--disable-background-timer-throttling',
         '--disable-renderer-backgrounding',
+        '--disable-features=IsolateOrigins,site-per-process',
       ],
     });
 
-    await use(context);
+    // 브라우저가 완전히 뜰 때까지 잠시 대기
+    await new Promise(r => setTimeout(r, 2000));
 
+    await use(context);
     await context.close();
-    // 임시 디렉토리 정리
     fs.rmSync(userDataDir, { recursive: true, force: true });
   }, { scope: 'worker' }],
 
-  // ── extensionId : 3단계 fallback으로 Service Worker에서 ID 추출 ──
   extensionId: [async ({ extContext }, use) => {
-    let sw = extContext.serviceWorkers()[0];
+    let extensionId: string | undefined;
 
-    // 1단계: waitForEvent (빠른 감지)
-    if (!sw) {
-      sw = await extContext
-        .waitForEvent('serviceworker', { timeout: 10_000 })
-        .catch(() => undefined as any);
+    // ── 방법 1: 이미 등록된 Service Worker ──────────────
+    const existing = extContext.serviceWorkers();
+    if (existing.length > 0) {
+      extensionId = existing[0].url().split('/')[2];
+      console.log('✅ extensionId (SW 즉시):', extensionId);
     }
 
-    // 2단계: 1초 간격 polling (최대 15초)
-    if (!sw) {
-      for (let i = 0; i < 15; i++) {
-        await new Promise(r => setTimeout(r, 1000));
-        sw = extContext.serviceWorkers()[0];
-        if (sw) break;
+    // ── 방법 2: Service Worker 이벤트 대기 (5초) ────────
+    if (!extensionId) {
+      try {
+        const sw = await extContext.waitForEvent('serviceworker', { timeout: 5000 });
+        extensionId = sw.url().split('/')[2];
+        console.log('✅ extensionId (SW 이벤트):', extensionId);
+      } catch {
+        console.log('⚠️ Service Worker 이벤트 미감지, chrome://extensions 로 fallback');
       }
     }
 
-    if (!sw) {
+    // ── 방법 3: chrome://extensions Shadow DOM 파싱 ─────
+    if (!extensionId) {
+      const page = await extContext.newPage();
+      try {
+        await page.goto('chrome://extensions');
+        await page.waitForTimeout(3000);
+
+        extensionId = await page.evaluate((): string | undefined => {
+          // Shadow DOM을 재귀적으로 탐색해서 extensions-item 의 id 속성 추출
+          function queryShadow(root: Document | ShadowRoot, selector: string): Element | null {
+            const direct = (root as Document).querySelector(selector);
+            if (direct) return direct;
+
+            const all = (root as Document).querySelectorAll('*');
+            for (const el of Array.from(all)) {
+              if (el.shadowRoot) {
+                const found = queryShadow(el.shadowRoot as unknown as Document, selector);
+                if (found) return found;
+              }
+            }
+            return null;
+          }
+
+          const item = queryShadow(document, 'extensions-item');
+          return item?.getAttribute('id') ?? undefined;
+        });
+
+        if (extensionId) {
+          console.log('✅ extensionId (chrome://extensions):', extensionId);
+        }
+      } catch (e) {
+        console.error('chrome://extensions 파싱 실패:', e);
+      } finally {
+        await page.close();
+      }
+    }
+
+    // ── 방법 4: polling으로 재시도 ──────────────────────
+    if (!extensionId) {
+      console.log('⚠️ 마지막 수단: polling 시도 (최대 10초)');
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        const sws = extContext.serviceWorkers();
+        if (sws.length > 0) {
+          extensionId = sws[0].url().split('/')[2];
+          console.log('✅ extensionId (polling):', extensionId);
+          break;
+        }
+      }
+    }
+
+    if (!extensionId) {
       throw new Error(
-        'Service Worker 감지 실패.\n' +
+        'extensionId 추출 실패.\n' +
         `extension 경로: ${EXTENSION_PATH}\n` +
-        'manifest.json 과 background.js 가 있는지 확인하세요.'
+        'manifest.json 에 background.service_worker 가 있는지 확인하세요.'
       );
     }
 
-    // chrome-extension://{id}/background.js → id 추출
-    const extensionId = sw.url().split('/')[2];
     await use(extensionId);
   }, { scope: 'worker' }],
 
-  // ── popupUrl : popup.html 직접 접근 URL ──
   popupUrl: [async ({ extensionId }, use) => {
     await use(`chrome-extension://${extensionId}/popup.html`);
   }, { scope: 'worker' }],
